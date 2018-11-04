@@ -11,7 +11,6 @@ from requests.exceptions import HTTPError
 import falcon
 from falcon import Request, Response
 
-
 from debateservice.scrapers import scrape_opinion_data
 from debateservice.exceptions import (
     debate_org_only,
@@ -113,6 +112,7 @@ class OpinionResource:
             If the URL parameter was missing from the request body or URL host
             is not debate.org
         """
+        # Get the body from the request
         body = self._extract_request_body(req)
 
         # Extract the URL from body
@@ -133,4 +133,6 @@ class OpinionResource:
             opinion = scrape_opinion_data(opinion_page)
         except ParseException:
             raise parse_error
+
+        # Respond with the opinion data
         resp.body = json.dumps(opinion)
