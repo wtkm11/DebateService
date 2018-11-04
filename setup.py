@@ -7,6 +7,7 @@ setup(
     tests_require=["pytest", "pytest-cov"],
     install_requires=[
         "falcon",
-        "gunicorn"
+        "gunicorn",
+        "requests",
     ]
 )
