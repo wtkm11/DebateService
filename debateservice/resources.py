@@ -9,15 +9,19 @@ from urllib.parse import urlparse
 import requests
 from requests.exceptions import HTTPError
 import falcon
-from falcon import (
-    HTTPBadRequest,
-    HTTPInternalServerError,
-    HTTPNotFound,
-    Request,
-    Response
-)
+from falcon import Request, Response
+
 
 from debateservice.scrapers import scrape_opinion_data
+from debateservice.exceptions import (
+    debate_org_only,
+    internal_server_error,
+    not_understood,
+    not_found,
+    missing_url_param,
+    parse_error,
+    ParseException
+)
 
 
 class OpinionResource:
@@ -48,21 +52,13 @@ class OpinionResource:
         Raises
         ------
         HTTPBadRequest
-            If the body cannot be retrieved from the request or the body does
-            not contain JSON
+            If the body cannot be read from the request or the body does not
+            contain valid JSON
         """
         try:
             body = json.loads(req.stream.read().decode("UTF-8"))
-        except json.JSONDecodeError:
-            raise HTTPBadRequest({
-                "title": "Bad request",
-                "description": "JSON is required."
-            })
         except:
-            raise HTTPBadRequest({
-                "title": "Bad request",
-                "description": "The request was not understood."
-            })
+            raise not_understood
         return body
 
     def _load_opinion_page(self, url: str) -> str:
@@ -92,20 +88,11 @@ class OpinionResource:
             resp.raise_for_status()
         except HTTPError:
             if resp.status_code == 404:
-                raise HTTPNotFound({
-                    "title": "Not Found",
-                    "description": "The opinion page does not exist."
-                })
+                raise not_found
             else:
-                raise HTTPInternalServerError({
-                    "title": "Internal server error",
-                    "description": "The opinion could not be retrieved."
-                })
+                raise internal_server_error
         except:
-            raise HTTPInternalServerError({
-                "title": "Internal server error",
-                "description": "The opinion could not be retrieved."
-            })
+            raise internal_server_error
 
         return resp.content
 
@@ -132,22 +119,18 @@ class OpinionResource:
         try:
             url = body["url"]
         except KeyError:
-            raise HTTPBadRequest({
-                "title": "Bad request",
-                "description": (
-                    "The `url` parameter was missing from the request body."
-                )
-            })
+            raise missing_url_param
 
         # Ensure that the host is debate.org
         if not urlparse(url).hostname.endswith("debate.org"):
-            raise HTTPBadRequest({
-                "title": "Bad request",
-                "description": "Only debate.org URLs are supported."
-            })
+            raise debate_org_only
 
         # Retrieve the page
         opinion_page = self._load_opinion_page(url)
 
         # Extract opinion data from the page
-        resp.body = json.dumps(scrape_opinion_data(opinion_page))
+        try:
+            opinion = scrape_opinion_data(opinion_page)
+        except ParseException:
+            raise parse_error
+        resp.body = json.dumps(opinion)
