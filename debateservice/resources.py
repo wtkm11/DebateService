@@ -150,17 +150,4 @@ class OpinionResource:
         opinion_page = self._load_opinion_page(url)
 
         # Extract opinion data from the page
-        opinion = scrape_opinion_data(opinion_page)
-
-        resp.body = json.dumps(
-            {
-                "name": opinion.name,
-                "yes_percent": opinion.yes_percent,
-                "arguments": [
-                    {
-                        "author": opinion.arguments[0].author,
-                        "description": opinion.arguments[0].description
-                    }
-                ]
-            }
-        )
+        resp.body = json.dumps(scrape_opinion_data(opinion_page))

@@ -7,7 +7,6 @@ from unittest import TestCase, mock
 from falcon.testing import TestClient as Client
 
 from debateservice.app import api
-from debateservice.models import Opinion, Argument
 
 
 @mock.patch("debateservice.resources.requests")
@@ -20,10 +19,20 @@ class OpinionResourceTests(TestCase):
     def setUp(self) -> None:
         # Create an API test client
         self.client = Client(api)
+        self.opinion = {
+            "name": "Should drug users be put in jail?",
+            "yes_percent": 42.01,
+            "arguments": [
+                {
+                    "author": "Argument description",
+                    "description": "@someone"
+                }
+            ]
+        }
 
-    def test_resource_calls_scraper(self, mock_scraper, mock_requests) -> None:
+    def test_retrieve_opinion(self, mock_scraper, mock_requests) -> None:
         """
-        Test that the resource calls the scraper and returns the opinion
+        Test that an opinion can be retrieved
         """
         request_data = {
             "url": (
@@ -31,27 +40,8 @@ class OpinionResourceTests(TestCase):
                 "prison"
             )
         }
-        argument = Argument(
-            description="Argument description",
-            author="@someone"
-        )
-        opinion = Opinion(
-            name="Should drug users be put in jail?",
-            yes_percent=42.01,
-            arguments=[argument]
-        )
-        opinion_response = {
-            "name": opinion.name,
-            "yes_percent": opinion.yes_percent,
-            "arguments": [
-                {
-                    "author": argument.author,
-                    "description": argument.description
-                }
-            ]
-        }
 
-        mock_scraper.return_value = opinion
+        mock_scraper.return_value = self.opinion
         result = self.client.simulate_post(
             "/opinions",
             body=json.dumps(request_data),
@@ -60,7 +50,7 @@ class OpinionResourceTests(TestCase):
 
         self.assertEqual(
             result.json,
-            opinion_response,
+            self.opinion,
             "The expected opinion data should have been returned"
         )
 

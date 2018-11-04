@@ -1,9 +1,10 @@
 """
 HTML Scrapers
 """
-from debateservice.models import Opinion, Argument
+from typing import Dict
 
-def scrape_opinion_data(source: str) -> Opinion:
+
+def scrape_opinion_data(source: str) -> Dict:
     """
     Scrape opinion data from a debate.org page source
 
@@ -14,6 +15,6 @@ def scrape_opinion_data(source: str) -> Opinion:
 
     Returns
     -------
-    Opinion
+    Dict
         The extracted opinion data
     """
