@@ -1,0 +1,5 @@
+[run]
+omit =
+    debateservice/tests/*
+    setup.py
+    venv/*
